@@ -7,7 +7,7 @@ RANDOM_SEED = 42
 SIMULATION_TIME = 10000
 
 # Create a SimPy environment
-env = simpy.RealtimeEnvironment(factor=0.01)
+env = simpy.Environment()
 
 #event handler instance
 event_handler = EventHandler(env)
@@ -38,12 +38,12 @@ vessel_2.add_hatch_profile(hatch_profile1)
 berth_planner.add_hatch_profile(hatch_profile)
 
 berth_planner.add_to_schedule(vessel=vessel_1,
-                              arrival_time=10,
+                              arrival_time=10.0,
                               berth_position=1,
                               cranes = berth_planner.cranes)
 
 berth_planner.add_to_schedule(vessel=vessel_2,
-                              arrival_time=20,
+                              arrival_time=20.0,
                               berth_position=1,
                               cranes = berth_planner.cranes)
 

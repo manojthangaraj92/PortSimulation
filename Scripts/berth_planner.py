@@ -97,6 +97,9 @@ class BerthPlanner:
         berth_request = self.berth.request()
         yield berth_request
         if (berth_request in self.berth.users):
+            print(f'The {vessel.name} started the pre-inspection at {self.env.now}')
+            yield self.env.timeout(vessel.prePcat)
+            print(f'The {vessel.name} finished the pre-inspection at {self.env.now}')
             print(f'The {vessel.name} is started the operation at {self.env.now}')
             vessel.on_berth_acquired(self.berth, berth_request)
             for crane_name in cranes:
@@ -115,7 +118,7 @@ class BerthPlanner:
 
     def handle_vessel_arrival(self, 
                               vessel:Vessel, 
-                              arrival_time:float, 
+                              arrival_time:float,
                               cranes:List[Crane]) -> None:
         yield self.env.timeout(arrival_time - self.env.now)
         print(f'The {vessel.name} is arrived at {self.env.now}')
@@ -126,4 +129,7 @@ class BerthPlanner:
             vessel = event["vessel"]
             arrival_time = event["arrival_time"]
             cranes = event["cranes"]
+            vessel.prePcat = event["pre-pcat"]
+            vessel.postPcat = event["post-pcat"]
+            vessel.arrivalTime = event["arrival_time"]
             self.env.process(self.handle_vessel_arrival(vessel, arrival_time, cranes))

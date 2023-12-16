@@ -75,8 +75,44 @@ class Vessel:
         self.berth:Berth = None
         self.berth_request:Berth.request = None
         self.cranes:List[Tuple[Crane, Crane.request]] = []
+        self._prePcat:int = 0
+        self._postPcat:int = 0
+        self._arrivalTime:int = 0
         Vessel.count += 1
     
+    @property
+    def prePcat(self) -> float:
+        return self._prePcat
+    
+    @prePcat.setter
+    def prePcat(self,
+                time:float) -> None:
+        if not isinstance(time, float):
+            raise ValueError("prePcat must be an integer")
+        self._prePcat = time
+    
+    @property
+    def postPcat(self) -> float:
+        return self._postPcat
+    
+    @postPcat.setter
+    def postPcat(self,
+                time:float) -> None:
+        if not isinstance(time, float):
+            raise ValueError("postPcat must be an integer")
+        self._postPcat = time
+
+    @property
+    def arrivalTime(self) -> float:
+        return self._arrivalTime
+    
+    @arrivalTime.setter
+    def arrivalTime(self,
+                time:float) -> None:
+        if not isinstance(time, float):
+            raise ValueError("arrivalTime must be an integer")
+        self._arrivalTime = time
+
     def set_berth(self, 
                   berth:Berth, 
                   berth_request:Berth.request) -> Berth:
@@ -90,6 +126,9 @@ class Vessel:
     
     def release_berth(self) -> None:
         if self.berth and not self.cranes:
+            print(f"The {self.name} starts the post_pcat inspection at {self.env.now}")
+            yield self.env.timeout(self.postPcat)
+            print(f"The {self.name} finished the post_pcat inspection at {self.env.now}")
             self.berth.release(self.berth_request)
             self.berth.occupied_by.remove(self)
             print(f"{self.berth.name} has completed all tasks for {self.name} at {self.env.now}")
@@ -111,7 +150,7 @@ class Vessel:
                 self.cranes.remove((crane,req))
 
         if not self.cranes:
-            self.release_berth()
+            self.env.process(self.release_berth())
 
     def on_berth_acquired(self,
                           berth:Berth, 
