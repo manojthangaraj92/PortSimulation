@@ -1,4 +1,6 @@
+from typing import Union
 import simpy
+from simpy.core import Environment
 
 class Resource(simpy.Resource):
     """
@@ -38,6 +40,13 @@ class Stores(simpy.Store):
     """
     def __init__(self, env:simpy.Environment, capacity:int):
         super().__init__(env, capacity=capacity)
+
+class FilterStore(simpy.FilterStore):
+    """
+    Base class for Filter store resource type
+    """
+    def __init__(self, env: Environment, capacity: float | int = ...):
+        super().__init__(env, capacity)
 
 class EventHandler:
     def __init__(self, env:simpy.Environment):

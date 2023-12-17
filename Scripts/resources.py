@@ -1,6 +1,7 @@
 from typing import List, Any, Optional, Dict, Tuple
 import simpy
 from Scripts.basic_objects import Resource
+from Scripts.yard_planner import *
 import random
 
 class Berth(Resource):
@@ -50,6 +51,11 @@ class Crane(Resource):
                 vessel.finished_hatch_profiles.append(hatch)
         print(f"{self.name} has completed all tasks for {vessel.name} at {self.env.now}")
         vessel.release_cranes(self)
+
+    def move_containers(self,
+                        yard_planner:YardPlanner,
+                        vessel:Any) -> None:
+        pass
         
     def __str__(self):
         return f"This Crane Object name is {self.name}"
