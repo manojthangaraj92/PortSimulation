@@ -1,4 +1,16 @@
-from enum import Enum
+from enum import Enum, auto
+
+class ContainerSize(Enum):
+    TWENTY_FT:str = "20FT"
+    FORTY_FT:str = "40FT"
 
 class ContainerType(Enum):
-    TWENTY_FT = "20 feet"
+    LADEN:str = "Full"
+    EMPTY:str = "Empty"
+
+class ContainerHandling(Enum):
+    LOAD:str = "Load"
+    DISCHARGE:str  = "Discharge"
+
+class CTInterface(Enum):
+    SHIP_INTERFACE = auto()

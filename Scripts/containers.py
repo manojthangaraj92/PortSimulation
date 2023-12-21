@@ -4,7 +4,9 @@ class Container:
     """
     counter = 0  # this counter is for generating container ids
 
-    def __init__(self, container_type:str, size:str):
+    def __init__(self, 
+                 container_type:str, 
+                 size:str) -> None:
         """
         Constructor for container
 
@@ -25,7 +27,7 @@ class Container:
         Container.counter += 1
 
         # Generate an ID 
-        return str(Container.counter)
+        return f'{self.size}-{Container.counter}'
 
     def __str__(self):
         return f"Container ID: {self.container_id}, Type: {self.container_type}, Size: {self.size}"
