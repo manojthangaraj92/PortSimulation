@@ -31,6 +31,7 @@ class Crane(Resource):
         self.env = env
         self.name = name
         self.vessel:Any = None
+        self.gang:Any = None
 
     def process_hatch_profiles(self, 
                                vessel:Any) -> None:

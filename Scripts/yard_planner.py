@@ -74,39 +74,41 @@ class Block(FilterStore):
         return super().put(container)
     
     def store_container(self, 
-                        container: Container, 
+                        container_id: Container, 
+                        size: ContainerSize, 
                         bay: int, 
                         cell: int) -> bool:
-        """Store a container object in the specified bay and cell."""
-        container_size = container.size
-        # Determine the size (20FT or 40FT) for the container
-        size = 20 if container_size == ContainerSize.TWENTY_FT else 40
+        if size == ContainerSize.TWENTY_FT and bay % 2 != 0:  # 20ft container in odd-numbered bay
+            return self._store_in_bay(container_id, bay - 1, cell)  # Adjusting bay number for 0-based index
+        elif size == ContainerSize.FORTY_FT:
+            lower_bay, upper_bay = self.get_20ft_bays_for_40ft(bay)
+            return self._store_in_bay(container_id, lower_bay, cell) and self._store_in_bay(container_id, upper_bay, cell)
+        else:
+            raise ValueError("Invalid container size")
+        
+    def get_20ft_bays_for_40ft(self, 
+                               bay: int) -> (int, int):
+        """Calculate the two 20ft bays for a given 40ft bay."""
+        lower_bay = bay * 2 - 3
+        upper_bay = bay * 2 - 1
+        return lower_bay, upper_bay
 
-        # Find the first available tier
-        available_tier = None
-        for tier in range(self._num_tiers):
-            if self._matrix[bay][cell][tier] is None:
-                available_tier = tier
-                break
-
-        if available_tier is None:
-            print(f"No space available in bay {bay}, cell {cell}.")
-            return False
-
-        # Check for space for a 40ft container
-        if size == 40:
-            if bay >= self._num_bays - 1 or self._matrix[bay + 1][cell][available_tier] is not None:
-                print(f"Not enough space for a 40ft container in bay {bay}, cell {cell}.")
-                return False
-            # Occupy the adjacent bay as well
-            self._matrix[bay + 1][cell][available_tier] = container.container_id
-
-        # Place the container
-        self._matrix[bay][cell][available_tier] = container.container_id
-        print(f"Stored container {container.container_id} in bay {bay}, cell {cell}, tier {available_tier}.")
-        self.env.process(self.put(container))
-        return True
-
+    def _store_in_bay(self, 
+                      container_id: Container, 
+                      bay: int, 
+                      cell: int) -> bool:
+        """Store a container in a specific bay and cell."""
+        for tier in range(len(self.matrix[bay][cell])):
+            if self.matrix[bay][cell][tier] is None:
+                self.matrix[bay][cell][tier] = container_id
+                container_id.bay = bay
+                container_id.cell = cell
+                container_id.tier = tier
+                container_id.block = self
+                print(f"Stored container {container_id} in bay {bay}, cell {cell}, tier {tier}.")
+                self.env.process(self.put(container_id))
+                return True
+        return False
 
     def retrieve_container(self, 
                            container_id):

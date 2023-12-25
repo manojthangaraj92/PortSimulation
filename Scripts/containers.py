@@ -1,3 +1,7 @@
+from Scripts.yard_planner import Block
+from Scripts.port_objects_definition import *
+from typing import Optional, List
+
 class Container:
     """
     This class is the base class for a containers in the port terminals.
@@ -5,17 +9,25 @@ class Container:
     counter = 0  # this counter is for generating container ids
 
     def __init__(self, 
-                 container_type:str, 
-                 size:str) -> None:
+                 container_type:ContainerType, 
+                 size:ContainerSize,
+                 dwell_time:Optional[float] = 10.0) -> None:
         """
         Constructor for container
 
         @param container_type: type of the container, eg: laden, empty etc.,
         @param size: size of the container. eg: 20FT, 40FT
         """
-        self.container_type = container_type
-        self.size = size
+        self._container_type = container_type
+        self._size = size
+        self._dwell_time = dwell_time
         self.container_id = self.generate_id()
+        self._block:Block = None
+        self._bay:int = None
+        self._cell:int = None
+        self._tier:int = None
+        self._from_interface = None
+        self._to_interface = None
 
     def generate_id(self)->str:
         """
@@ -23,11 +35,101 @@ class Container:
 
         @return: A unique id for the container
         """
-
         Container.counter += 1
-
-        # Generate an ID 
         return f'{self.size}-{Container.counter}'
+    
+    @property
+    def block(self) -> Block:
+        return self._block
+    
+    @block.setter
+    def block(self,
+              block:Block) -> None:
+        if not isinstance(block, Block):
+            raise ValueError(f'{block} must of type {Block} instead got {type(block)}.')
+        self._block = block
+
+    @property
+    def bay(self) -> int:
+        return self._bay
+    
+    @bay.setter
+    def bay(self,
+              bay:int) -> None:
+        if not isinstance(bay, int):
+            raise ValueError(f'{bay} must of type integer, instead got {type(bay)}.')
+        self._bay = bay
+
+    @property
+    def cell(self) -> int:
+        return self._cell
+    
+    @cell.setter
+    def cell(self,
+              cell:int) -> None:
+        if not isinstance(cell, int):
+            raise ValueError(f'{cell} must of type integer, instead got {type(cell)}.')
+        self._cell = cell
+
+    @property
+    def tier(self) -> int:
+        return self._tier
+    
+    @tier.setter
+    def tier(self,
+              tier:int) -> None:
+        if not isinstance(tier, int):
+            raise ValueError(f'{tier} must of type integer, instead got {type(tier)}.')
+        self._cell = tier
+
+    @property
+    def to_interface(self) -> CTInterface:
+        return self._to_interface
+    
+    @to_interface.setter
+    def to_interface(self,
+              to_interface:CTInterface) -> None:
+        if not isinstance(to_interface, CTInterface):
+            raise ValueError(f'{to_interface} must of type {CTInterface}, instead got {type(self._to_interface)}.')
+        self._to_interface = to_interface
+
+    @property
+    def from_interface(self) -> CTInterface:
+        return self._from_interface
+    
+    @from_interface.setter
+    def from_interface(self,
+              from_interface:CTInterface) -> None:
+        if not isinstance(from_interface, CTInterface):
+            raise ValueError(f'{from_interface} must of type {CTInterface}, instead got {type(self._from_interface)}.')
+        self._to_interface = from_interface
 
     def __str__(self):
-        return f"Container ID: {self.container_id}, Type: {self.container_type}, Size: {self.size}"
+        return f"Container ID: {self.container_id}, Type: {self._container_type}, Size: {self._size}"
+    
+
+class ContainerList:
+    def __init__(self):
+        self._containers:List[Container] = []
+        self.size = 0
+
+    @property
+    def containers(self) -> List[Container]:
+        return self._containers
+    
+    @containers.setter
+    def containers(self,
+                   container:Container) -> None:
+        if not isinstance(container, Container):
+            raise ValueError(f'{container} must of type {Container}, instead got {type(container)}.')
+        self._containers.append(container)
+        self.size = len(self._containers)
+
+    def remove_container(self,
+                         idx:Optional[int]=0) -> Container:
+        if not idx:
+            container = self._containers.pop()
+        else:
+            container = self._containers.pop(self.size)
+        self.size = len(self._containers)
+        return container
