@@ -1,6 +1,6 @@
 from typing import List, Any, Optional, Dict, Tuple
 import simpy
-from Scripts.basic_objects import Resource
+from Scripts.Utils.basic_objects import Resource
 from Scripts.yard_planner import *
 import random
 

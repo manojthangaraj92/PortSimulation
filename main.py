@@ -1,5 +1,5 @@
 from Scripts.berth_planner import *
-from Scripts.basic_objects import EventHandler
+from Scripts.Utils.basic_objects import EventHandler
 import simpy
 
 #define the global variables

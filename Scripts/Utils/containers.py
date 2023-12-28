@@ -1,5 +1,5 @@
 from Scripts.yard_planner import Block
-from Scripts.port_objects_definition import *
+from Utils.port_objects_definition import *
 from typing import Optional, List, Dict, Tuple
 
 class Container:
@@ -39,13 +39,13 @@ class Container:
         return f'{self._size}-{Container.counter}'
     
     @property
-    def block(self) -> Block:
+    def block(self) -> str:
         return self._block
     
     @block.setter
     def block(self,
-              block:Block) -> None:
-        if not isinstance(block, Block):
+              block:str) -> None:
+        if not isinstance(block, str):
             raise ValueError(f'{block} must of type {Block} instead got {type(block)}.')
         self._block = block.name
 

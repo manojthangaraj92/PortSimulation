@@ -6,7 +6,7 @@ class OneIndexedList:
         self.data:List[Any] = initial_data if initial_data is not None else []
 
     def __getitem__(self, 
-                    index:int) -> List[Any]:
+                    index:int) -> Any:
         return self.data[index - 1]
 
     def __setitem__(self, 
@@ -25,11 +25,16 @@ class OneIndexedList:
         return self.data.__repr__()
 
 class Stack:
-    def __init__(self) -> None:
+    def __init__(self,
+                 max_size:int) -> None:
         self.items:List[Any] = []
-
+        self.max_size:int = max_size
+        self.temp_overstack_allowed = False
+        
     def push(self, 
              item:Any) -> None:
+        if not self.temp_overstack_allowed and len(self.items) >= self.max_size:
+            raise Exception("Stack overflow: Attempted to exceed stack max size")
         self.items.append(item)
 
     def pop(self) -> Any:
@@ -37,3 +42,9 @@ class Stack:
     
     def __len__(self) -> int:
         return len(self.items)
+    
+    def allow_temp_overstack(self):
+        self.temp_overstack_allowed = True
+
+    def disallow_temp_overstack(self):
+        self.temp_overstack_allowed = False

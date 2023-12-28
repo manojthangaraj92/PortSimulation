@@ -1,9 +1,9 @@
-from Scripts.basic_objects import FilterStore
+from Scripts.Utils.basic_objects import FilterStore
 import simpy
 from typing import List, Any, Dict, Tuple, Optional
-from Scripts.port_objects_definition import *
-from Scripts.containers import Container, ContainerLocationRegistry
-from Scripts.basic_data_structures import OneIndexedList, Stack
+from Scripts.Utils.port_objects_definition import *
+from Scripts.Utils.containers import Container, ContainerLocationRegistry
+from Scripts.Utils.basic_data_structures import OneIndexedList, Stack
 
 class Block(FilterStore):
     """
@@ -64,7 +64,7 @@ class Block(FilterStore):
         return self._matrix
     
     def update_matrix(self) -> None:
-        self._matrix = OneIndexedList([OneIndexedList([Stack() for _ in range(self._num_cells)]) for _ in range(self._num_bays * 2 - 1)])
+        self._matrix = OneIndexedList([OneIndexedList([Stack(self._num_tiers) for _ in range(self._num_cells)]) for _ in range(self._num_bays * 2 - 1)])
 
     def put(self, 
             container: Container) -> simpy.Event:
@@ -123,8 +123,16 @@ class Block(FilterStore):
                            container_id:str, 
                            bay:int, 
                            cell:int) -> Container:
+        # Define a filter function based on container ID
+        def container_filter(container):
+            return container.container_id == container_id
+
+        # Use the get method with the filter function
+        get_event = self.get(container_filter)
+        # Process the get event in the SimPy environment
+        yield get_event
+
         target_stack = self._matrix[bay][cell]
-        temp_cell = self._find_next_cell_with_space(bay, cell)
 
         # Dig for the container
         container_found = False
@@ -133,14 +141,24 @@ class Block(FilterStore):
             if current_container.container_id == container_id:
                 container_found = True
             else:
+                temp_cell = self._find_next_cell_with_space(bay, cell)
+                # Allow temporary over-stacking in the temporary cell
+                self._matrix[bay][temp_cell].allow_temp_overstack()
                 self._matrix[bay][temp_cell].push(current_container)
+                current_container._tier = len(self._matrix[bay][temp_cell])
+                current_container._bay = self._matrix[bay]
+                current_container._cell = self._matrix[bay][temp_cell]
+                self.location_registry[current_container.container_id] = (self.name, current_container._bay, current_container._cell, current_container._tier)
 
-        # Handle case where container is not found
+                # Disallow temporary over-stacking after operation
+                self._matrix[bay][temp_cell].disallow_temp_overstack()
+
+        # # Handle case where container is not found
         if not container_found:
-            # Move containers back from temp_cell to original cell
-            while self._matrix[bay][temp_cell].items:
-                target_stack.push(self._matrix[bay][temp_cell].pop())
-            return None
+        #     # Move containers back from temp_cell to original cell
+        #     while self._matrix[bay][temp_cell].items:
+        #         target_stack.push(self._matrix[bay][temp_cell].pop())
+             return None
         #print(f"Retrieving container {container_id} at time {self.env.now}")
         #return self.get(filter=container_filter)
         return current_container  # or return the container object
@@ -164,3 +182,20 @@ class YardPlanner:
     def add_block(self, 
                   block:Block) -> None:
         self.blocks.append(block)
+
+class ContainerPlacementStrategy:
+    @staticmethod
+    def find_placement(blocks:List[Block], 
+                       container:Container):
+        container_size = container._size
+        start_bay = 1 if container_size == ContainerSize.TWENTY_FT else 2
+        bay_increment = 2
+
+        for block in blocks:
+            for bay in range(start_bay, block.num_bays * 2, bay_increment):  # Adjusting for one-indexed list
+                for cell in range(1, block._num_cells + 1):
+                    if container_size == ContainerSize.TWENTY_FT and block._is_20ft_bay_available(bay, cell):
+                        return block, bay, cell
+                    elif container_size == ContainerSize.FORTY_FT and block._is_40ft_bay_available(bay, cell):
+                        return block, bay, cell
+        return None, None, None
