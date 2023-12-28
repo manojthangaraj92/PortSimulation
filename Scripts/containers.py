@@ -1,6 +1,6 @@
 from Scripts.yard_planner import Block
 from Scripts.port_objects_definition import *
-from typing import Optional, List
+from typing import Optional, List, Dict, Tuple
 
 class Container:
     """
@@ -22,7 +22,7 @@ class Container:
         self._size = size
         self._dwell_time = dwell_time
         self.container_id = self.generate_id()
-        self._block:Block = None
+        self._block:str = None
         self._bay:int = None
         self._cell:int = None
         self._tier:int = None
@@ -36,7 +36,7 @@ class Container:
         @return: A unique id for the container
         """
         Container.counter += 1
-        return f'{self.size}-{Container.counter}'
+        return f'{self._size}-{Container.counter}'
     
     @property
     def block(self) -> Block:
@@ -47,7 +47,7 @@ class Container:
               block:Block) -> None:
         if not isinstance(block, Block):
             raise ValueError(f'{block} must of type {Block} instead got {type(block)}.')
-        self._block = block
+        self._block = block.name
 
     @property
     def bay(self) -> int:
@@ -107,7 +107,6 @@ class Container:
     def __str__(self):
         return f"Container ID: {self.container_id}, Type: {self._container_type}, Size: {self._size}"
     
-
 class ContainerList:
     def __init__(self):
         self._containers:List[Container] = []
@@ -133,3 +132,31 @@ class ContainerList:
             container = self._containers.pop(self.size)
         self.size = len(self._containers)
         return container
+    
+class ContainerLocationRegistry:
+    _instance = None
+    location_registry:Dict[Container.container_id,Tuple[str, int, int, int]] = {}
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ContainerLocationRegistry, cls).__new__(cls)
+        return cls._instance
+
+    @classmethod
+    def register_container(cls, 
+                           container_id:Container.container_id, 
+                           block:str, 
+                           bay:int, 
+                           cell:int, 
+                           tier:int) -> None:
+        cls.location_registry[container_id] = (block, bay, cell, tier)
+
+    @classmethod
+    def get_container_location(cls, 
+                               container_id:Container.container_id) -> Tuple[str, int, int, int]:
+        return cls.location_registry.get(container_id, None)
+
+    @classmethod
+    def remove_container(cls, 
+                         container_id:Container.container_id) -> None:
+        if container_id in cls.location_registry:
+            del cls.location_registry[container_id]

@@ -2,7 +2,8 @@ from Scripts.basic_objects import FilterStore
 import simpy
 from typing import List, Any, Dict, Tuple, Optional
 from Scripts.port_objects_definition import *
-from Scripts.containers import Container
+from Scripts.containers import Container, ContainerLocationRegistry
+from Scripts.basic_data_structures import OneIndexedList, Stack
 
 class Block(FilterStore):
     """
@@ -19,7 +20,8 @@ class Block(FilterStore):
         self._num_bays:int = 0
         self._num_cells:int = 0
         self._num_tiers:int = 0
-        self._matrix:List[List[List[Optional[str]]]] = []
+        self.location_registry:ContainerLocationRegistry = ContainerLocationRegistry()
+        self._matrix:OneIndexedList[OneIndexedList[Stack[Container]]] = None
 
     @property
     def num_bays(self) -> int:
@@ -62,8 +64,8 @@ class Block(FilterStore):
         return self._matrix
     
     def update_matrix(self) -> None:
-        self._matrix = [[[None for _ in range(self._num_tiers)] for _ in range(self._num_cells)] for _ in range(self._num_bays)]
-    
+        self._matrix = OneIndexedList([OneIndexedList([Stack() for _ in range(self._num_cells)]) for _ in range(self._num_bays * 2 - 1)])
+
     def put(self, 
             container: Container) -> simpy.Event:
         """
@@ -74,50 +76,86 @@ class Block(FilterStore):
         return super().put(container)
     
     def store_container(self, 
-                        container_id: Container, 
-                        size: ContainerSize, 
-                        bay: int, 
-                        cell: int) -> bool:
-        if size == ContainerSize.TWENTY_FT and bay % 2 != 0:  # 20ft container in odd-numbered bay
-            return self._store_in_bay(container_id, bay - 1, cell)  # Adjusting bay number for 0-based index
+                        container:Container, 
+                        size:ContainerSize, 
+                        bay:int, 
+                        cell:int) -> bool:
+        if size == ContainerSize.TWENTY_FT:
+            if not self._is_20ft_bay_available(bay, cell):
+                return False
         elif size == ContainerSize.FORTY_FT:
-            lower_bay, upper_bay = self.get_20ft_bays_for_40ft(bay)
-            return self._store_in_bay(container_id, lower_bay, cell) and self._store_in_bay(container_id, upper_bay, cell)
-        else:
-            raise ValueError("Invalid container size")
+            if not self._is_40ft_bay_available(bay, cell):
+                return False
         
-    def get_20ft_bays_for_40ft(self, 
-                               bay: int) -> (int, int):
-        """Calculate the two 20ft bays for a given 40ft bay."""
-        lower_bay = bay * 2 - 3
-        upper_bay = bay * 2 - 1
-        return lower_bay, upper_bay
+        # Store container in the specified bay and cell, on the top of the stack
+        self._matrix[bay][cell].push(container)
+        container.bay = bay
+        container.cell = cell
+        container.tier = len(self._matrix[bay][cell])
+        container.block = self.name
+        self.location_registry[container.container_id] = (self.name, bay, cell, container.tier)
+        self.env.process(self.put(container))
+        return True
+    
+    def _is_20ft_bay_available(self, 
+                               bay:int, 
+                               cell:int) -> bool:
+        # Check adjacent even bays
+        if bay > 1 and self._matrix[bay - 1][cell]:  # Check lower even bay
+            return False
+        if bay < len(self._matrix) and self._matrix[bay + 1][cell]:  # Check upper even bay
+            return False
+        return True
 
-    def _store_in_bay(self, 
-                      container_id: Container, 
-                      bay: int, 
-                      cell: int) -> bool:
-        """Store a container in a specific bay and cell."""
-        for tier in range(len(self.matrix[bay][cell])):
-            if self.matrix[bay][cell][tier] is None:
-                self.matrix[bay][cell][tier] = container_id
-                container_id.bay = bay
-                container_id.cell = cell
-                container_id.tier = tier
-                container_id.block = self
-                print(f"Stored container {container_id} in bay {bay}, cell {cell}, tier {tier}.")
-                self.env.process(self.put(container_id))
-                return True
-        return False
-
+    def _is_40ft_bay_available(self, 
+                               bay:int, 
+                               cell:int) -> bool:
+        # Check lower and upper odd bays for 40ft container
+        lower_bay = bay - 1
+        upper_bay = bay + 1
+        if lower_bay > 0 and self._matrix[lower_bay][cell]:
+            return False
+        if upper_bay <= len(self._matrix) and self._matrix[upper_bay][cell]:
+            return False
+        return True
+    
     def retrieve_container(self, 
-                           container_id):
-        """Retrieve a specific container from the block."""
-        def container_filter(container):
-            return container == container_id
-        
-        print(f"Retrieving container {container_id} at time {self.env.now}")
-        return self.get(filter=container_filter)
+                           container_id:str, 
+                           bay:int, 
+                           cell:int) -> Container:
+        target_stack = self._matrix[bay][cell]
+        temp_cell = self._find_next_cell_with_space(bay, cell)
+
+        # Dig for the container
+        container_found = False
+        while not container_found and target_stack.items:
+            current_container = target_stack.pop()
+            if current_container.container_id == container_id:
+                container_found = True
+            else:
+                self._matrix[bay][temp_cell].push(current_container)
+
+        # Handle case where container is not found
+        if not container_found:
+            # Move containers back from temp_cell to original cell
+            while self._matrix[bay][temp_cell].items:
+                target_stack.push(self._matrix[bay][temp_cell].pop())
+            return None
+        #print(f"Retrieving container {container_id} at time {self.env.now}")
+        #return self.get(filter=container_filter)
+        return current_container  # or return the container object
+
+    def _find_next_cell_with_space(self, 
+                                   bay:int, 
+                                   current_cell:int) -> int:
+        # Find the next cell with the fewest containers
+        min_containers = float('inf')
+        next_cell = current_cell
+        for cell in range(len(self.matrix[bay])):
+            if cell != current_cell and len(self.matrix[bay][cell]) < min_containers:
+                min_containers = len(self.matrix[bay][cell])
+                next_cell = cell
+        return next_cell
     
 class YardPlanner:
     def __init__(self):
