@@ -1,4 +1,4 @@
-from Scripts.berth_planner import *
+from Scripts.BerthPlanner.berth_planner import *
 from Scripts.Utils.basic_objects import EventHandler
 import simpy
 

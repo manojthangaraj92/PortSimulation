@@ -1,4 +1,4 @@
-from Scripts.resources import *
+from Scripts.Resources.resources import *
 
 class HatchProfile:
     """
