@@ -1,7 +1,7 @@
 from typing import List, Any, Optional, Dict, Tuple
 import simpy
 from Scripts.Resources.resources import Berth, Crane
-from BerthPlanner.vessel import Vessel, VesselArrival, HatchProfile
+from Scripts.BerthPlanner.vessel import Vessel, VesselArrival, HatchProfile
 
 class BerthPlanner:
     """

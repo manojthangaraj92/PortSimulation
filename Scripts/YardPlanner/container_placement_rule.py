@@ -1,7 +1,7 @@
 from typing import List, Any
 from Scripts.Utils.containers import Container
 from Scripts.Utils.port_objects_definition import *
-from YardPlanner.blocks import Block
+from Scripts.YardPlanner.blocks import Block
 
 class ContainerPlacementStrategy:
     @staticmethod

@@ -93,8 +93,10 @@ class Block(FilterStore):
         container._cell = cell
         container._tier = len(self._matrix[bay][cell])
         container.block = self.name
-        self.location_registry[container.container_id] = (self.name, bay, cell, container.tier)
-        self.env.process(self.put(container))
+        self.location_registry.register_container(container.container_id, self.name, bay, cell, container.tier)
+        #self.location_registry[container.container_id] = (self.name, bay, cell, container.tier)
+        #self.env.process(self.put(container))
+        self.put(container)
         return True
     
     def _is_20ft_bay_available(self, 
@@ -128,9 +130,9 @@ class Block(FilterStore):
             return container.container_id == container_id
 
         # Use the get method with the filter function
-        get_event = self.get(container_filter)
+        #get_event = self.get(container_filter)
         # Process the get event in the SimPy environment
-        yield get_event
+        #yield get_event
 
         target_stack = self._matrix[bay][cell]
 
@@ -148,7 +150,7 @@ class Block(FilterStore):
                 current_container._tier = len(self._matrix[bay][temp_cell])
                 current_container._bay = self._matrix[bay]
                 current_container._cell = self._matrix[bay][temp_cell]
-                self.location_registry[current_container.container_id] = (self.name, current_container._bay, current_container._cell, current_container._tier)
+                self.location_registry.register_container(current_container.container_id, self.name, current_container._bay, current_container._cell, current_container._tier)
 
                 # Disallow temporary over-stacking after operation
                 self._matrix[bay][temp_cell].disallow_temp_overstack()

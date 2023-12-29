@@ -1,9 +1,9 @@
 from Scripts.Utils.containers import Container
 from Scripts.Utils.port_objects_definition import *
-from YardPlanner.blocks import Block, BlockFactory
+from Scripts.YardPlanner.blocks import Block, BlockFactory
 from typing import List, Any, Tuple
 import simpy
-from YardPlanner.container_placement_rule import ContainerPlacementStrategy
+from Scripts.YardPlanner.container_placement_rule import ContainerPlacementStrategy
 
 class YardPlanner:
     def __init__(self, env:simpy.Environment):

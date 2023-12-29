@@ -1,5 +1,5 @@
-from ..Scripts.YardPlanner.yard_planner import Block
-from ..Scripts.Utils.containers import *
+from Scripts.YardPlanner import Block
+from Scripts.Utils import *
 import unittest
 import simpy
 
@@ -22,10 +22,16 @@ class TestBlock(unittest.TestCase):
         self.block.store_container(container_20ft, ContainerSize.TWENTY_FT, 1, 1)
         self.assertEqual(len(self.block.matrix[1][1]), 1)  # Container should be stored
 
-        retrieved_container = self.block.retrieve_container("C20FT", 1, 1)
-        self.assertEqual(retrieved_container, container_20ft)
+        # Run the environment to process the retrieval
+        #retrieve_process 
+        retrieved_container = self.block.retrieve_container(container_20ft.container_id, 1, 1)
+        # Run the environment for a set amount of time
+        #self.env.run(until=100)  # Adjust the time as needed
 
-# More tests can be added as needed
+        # Extract the result from the generator
+        #retrieved_container = next(retrieve_process)
+        self.assertEqual(retrieved_container, container_20ft)
+        # More tests can be added as needed
 
 if __name__ == '__main__':
     unittest.main()

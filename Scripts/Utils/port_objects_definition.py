@@ -13,4 +13,7 @@ class ContainerHandling(Enum):
     DISCHARGE:str  = "Discharge"
 
 class CTInterface(Enum):
-    SHIP_INTERFACE = auto()
+    VESSEL_INTERFACE = auto()
+    GATE_INTERFACE = auto()
+    YARD_INTERFACE = auto()
+    RAIL_INTERFACE = auto()
