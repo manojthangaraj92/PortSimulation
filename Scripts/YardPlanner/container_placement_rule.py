@@ -17,5 +17,5 @@ class ContainerPlacementStrategy:
                     if container_size == ContainerSize.TWENTY_FT and block._is_20ft_bay_available(bay, cell):
                         return block, bay, cell
                     elif container_size == ContainerSize.FORTY_FT and block._is_40ft_bay_available(bay, cell):
-                        return block, bay, cell
+                        return block.name, bay, cell
         return None, None, None

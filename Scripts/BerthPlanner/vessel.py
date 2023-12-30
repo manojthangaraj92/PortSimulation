@@ -1,4 +1,5 @@
 from Scripts.Resources.resources import *
+from Scripts.Utils.port_objects_definition import *
 
 class HatchProfile:
     """
@@ -15,9 +16,10 @@ class HatchProfile:
         self.num_rows: int= 0
         self.rows: List[Dict[str:Any]]= []
 
-    def add_row(self, operation_type:str,
-                container_type:str,
-                container_size:Any, 
+    def add_row(self, 
+                operation_type:ContainerHandling,
+                container_type:ContainerType,
+                container_size:ContainerSize, 
                 min_value:int, 
                 max_value:int) -> None:
         """

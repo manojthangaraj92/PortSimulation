@@ -1,6 +1,7 @@
 from typing import List, Any, Optional, Dict, Tuple
 import simpy
 from Scripts.Utils.basic_objects import Resource
+from Scripts.Utils.port_objects_definition import *
 from Scripts.YardPlanner.yard_planner import *
 import random
 
@@ -31,10 +32,11 @@ class Crane(Resource):
         self.env = env
         self.name = name
         self.vessel:Any = None
-        self.gang:Any = None
+        self.truck_gang:Any = None
 
     def process_hatch_profiles(self, 
-                               vessel:Any) -> None:
+                               vessel:Any,
+                               yard_planner:YardPlanner) -> None:
         self.vessel = vessel
         if len(vessel.hatch_profiles)>0:
             for _ in vessel.hatch_profiles:
@@ -44,9 +46,32 @@ class Crane(Resource):
                     min_containers, max_containers = row["min_value"], row["max_value"]
                     num_containers = random.randint(min_containers, max_containers)
 
-                    for _ in range(num_containers):
-                        yield self.env.timeout(100)  # 100 seconds for each container
-                        print(f"{self.name} moved a container from {vessel.name} at {self.env.now}")
+                    if row["operation_type"] == ContainerHandling.DISCHARGE:
+                        container_type = row["container_type"]
+                        container_size = row["container_size"]
+                        for _ in range(num_containers):
+                            container_created = yard_planner.container_factory.create_container(
+                                container_type,
+                                container_size
+                            )
+                            container_created.from_interface = CTInterface.VESSEL_INTERFACE
+                            container_created.to_interface = CTInterface.YARD_INTERFACE
+                            yield self.env.timeout(1200)  # 100 seconds for each container
+                            print(f"{self.name} moved a container from {vessel.name} at {self.env.now}")
+                            block, bay, cell = yard_planner.container_placement_rule.find_placement_by_bay(
+                                yard_planner.block_list, 
+                                container_created
+                                )
+                            yard_planner.yard_place_container(
+                                container_created, 
+                                block, 
+                                bay, 
+                                cell
+                                )
+                    elif row["operation_type"] == ContainerHandling.LOAD:
+                        for _ in range(num_containers):
+                            yield self.env.timeout(100)  # 100 seconds for each container
+                            print(f"{self.name} moved a container from {vessel.name} at {self.env.now}")
 
                 vessel.finished_hatches += 1
                 vessel.finished_hatch_profiles.append(hatch)

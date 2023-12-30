@@ -159,3 +159,23 @@ class ContainerLocationRegistry:
                          container_id:str) -> None:
         if container_id in cls.location_registry:
             del cls.location_registry[container_id]
+
+class ContainerFactory:
+    @staticmethod
+    def create_container(container_type:ContainerType, 
+                         size:ContainerSize, 
+                         additional_args=None):
+        """
+        Create and return a new container object.
+
+        Args:
+            container_type (str): The type of the container (e.g., 'laden', 'empty').
+            size (ContainerSize): The size of the container (e.g., ContainerSize.TWENTY_FT).
+            additional_args (dict, optional): Additional arguments for container creation.
+
+        Returns:
+            Container: A new container object.
+        """
+        # Additional logic for container creation can be added here
+        dwell_time = additional_args.get('dwell_time', 10.0) if additional_args else 10.0
+        return Container(container_type, size, dwell_time)

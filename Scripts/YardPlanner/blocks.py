@@ -183,7 +183,7 @@ class BlockFactory:
     @staticmethod
     def get_block(env, 
                   capacity:int, 
-                  name:str):
+                  name:str) -> Block:
         if name not in BlockFactory._blocks:
             BlockFactory._blocks[name] = Block(env, capacity, name)
         return BlockFactory._blocks[name]
