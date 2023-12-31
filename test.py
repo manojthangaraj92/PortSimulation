@@ -1,5 +1,5 @@
-from Scripts.YardPlanner import Block
-import simpy
-env = simpy.Environment()
-x = Block(env, 1, "x")
-print(x.name)
+from Scripts import RandomTimeGenerator
+
+generator = RandomTimeGenerator(distribution='norm', loc=200, scale=15)
+random_values = generator.generate(size=1)  # Generate 100 values
+print(random_values)

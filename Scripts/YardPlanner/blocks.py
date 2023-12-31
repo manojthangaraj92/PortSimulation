@@ -4,6 +4,9 @@ from typing import List, Any, Dict, Tuple, Optional
 from Scripts.Utils.port_objects_definition import *
 from Scripts.Utils.containers import Container, ContainerLocationRegistry
 from Scripts.Utils.basic_data_structures import OneIndexedList, Stack
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 class Block(FilterStore):
     """
@@ -180,6 +183,29 @@ class Block(FilterStore):
                 min_containers = len(self.matrix[bay][cell])
                 next_cell = cell
         return next_cell
+    
+    def visualize_block_matrix_3d(self):
+        num_bays = self._num_bays
+        num_cells = self._num_cells
+        num_tiers = self._num_tiers
+        matrix = self._matrix
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        for bay in range(num_bays):
+            for cell in range(num_cells):
+                for tier in range(num_tiers):
+                    stack_height = len(self._matrix[bay][cell])
+                    if stack_height > 0:
+                        # Plot the stack height as a bar
+                        ax.bar3d(bay, cell, 0, 1, 1, stack_height, color='blue', shade=True)
+
+        ax.set_title('3D Block Container Layout')
+        ax.set_xlabel('Bays')
+        ax.set_ylabel('Cells')
+        ax.set_zlabel('Tiers')
+        plt.show()
     
 class BlockFactory:
     _blocks = {}  # Dictionary to store block instances

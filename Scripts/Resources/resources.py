@@ -3,6 +3,7 @@ import simpy
 from Scripts.Utils.basic_objects import Resource
 from Scripts.Utils.port_objects_definition import *
 from Scripts.YardPlanner.yard_planner import *
+from Scripts.Statistics.time_generator import RandomTimeGenerator
 import random
 
 class Berth(Resource):
@@ -35,7 +36,31 @@ class Crane(Resource):
         self.vessel:Any = None
         self.truck_gang:Any = None
         self.yard_planner = yard_planner
+        self._loading_time:RandomTimeGenerator = RandomTimeGenerator("norm", loc=200, scale=25)
+        self._unloading_time:RandomTimeGenerator = RandomTimeGenerator("norm", loc=200, scale=25)
 
+    @property
+    def loading_time(self) -> RandomTimeGenerator:
+        return self._loading_time
+    
+    @loading_time.setter
+    def loading_time(self, 
+                     time:RandomTimeGenerator) -> None:
+        if not isinstance(time, RandomTimeGenerator):
+            raise ValueError(f"bays must be a type {type(RandomTimeGenerator)}")
+        self._loading_time = time
+
+    @property
+    def unloading_time(self) -> RandomTimeGenerator:
+        return self._unloading_time
+    
+    @unloading_time.setter
+    def unloading_time(self, 
+                       time:RandomTimeGenerator) -> None:
+        if not isinstance(time, RandomTimeGenerator):
+            raise ValueError(f"bays must be a type {type(RandomTimeGenerator)}")
+        self._unloading_time = time
+    
     def process_hatch_profiles(self, 
                                vessel:Any) -> None:
         self.vessel = vessel
@@ -57,7 +82,8 @@ class Crane(Resource):
                             )
                             container_created.from_interface = CTInterface.VESSEL_INTERFACE
                             container_created.to_interface = CTInterface.YARD_INTERFACE
-                            yield self.env.timeout(1200)  # 100 seconds for each container
+                            delay_time = self.unloading_time.generate()[0]
+                            yield self.env.timeout(delay_time)  # 100 seconds for each container
                             print(f"{self.name} moved a container from {vessel.name} at {self.env.now}")
                             block, bay, cell = self.yard_planner.container_placement_rule.find_placement_by_bay(
                                 self.yard_planner.block_list, 
@@ -71,9 +97,10 @@ class Crane(Resource):
                                 )
                     elif row["operation_type"] == ContainerHandling.LOAD:
                         for _ in range(num_containers):
-                            yield self.env.timeout(100)  # 100 seconds for each container
+                            delay_time = self.loading_time.generate()[0]
+                            yield self.env.timeout(delay_time)
                             print(f"{self.name} moved a container from {vessel.name} at {self.env.now}")
-
+                #self.yard_planner.visualize_multiple_blocks_updating()
                 vessel.finished_hatches += 1
                 vessel.finished_hatch_profiles.append(hatch)
         print(f"{self.name} has completed all tasks for {vessel.name} at {self.env.now}")

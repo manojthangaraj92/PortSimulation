@@ -5,8 +5,16 @@ from Scripts.YardPlanner.blocks import Block
 
 class ContainerPlacementStrategy:
     @staticmethod
-    def find_placement_by_bay(blocks:List[Block], 
-                       container:Container):
+    def find_placement_by_bay(blocks:List[Block],
+                              container:Container):
+        """
+        This Function places the container in the given list of blocks.
+
+        @@params blocks_list : List of block objects
+        @@params container: The container object
+
+        returns block name, bay number, cell number
+        """
         container_size = container._size
         start_bay = 1 if container_size == ContainerSize.TWENTY_FT else 2
         bay_increment = 2
