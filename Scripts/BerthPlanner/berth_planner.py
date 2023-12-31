@@ -2,19 +2,23 @@ from typing import List, Any, Optional, Dict, Tuple
 import simpy
 from Scripts.Resources.resources import Berth, Crane
 from Scripts.BerthPlanner.vessel import Vessel, VesselArrival, HatchProfile
+from Scripts.YardPlanner.yard_planner import YardPlanner
 
 class BerthPlanner:
     """
     The Berth planner is a entity that holds the berth, crane, vessels details. It holds all the informations
     needed for executing berth operations.
     """
-    def __init__(self, env:simpy.Environment):
+    def __init__(self, 
+                 env:simpy.Environment,
+                 yard_planner:YardPlanner) -> None:
         self.env = env
         self.berth:Berth = None  # List of available berths
         self.cranes:List[Crane] = []  # List of crane instances
         self.vessels: List[Vessel] = [] # List of Vessels instances
         self.scheduler:VesselArrival = VesselArrival(env) # List of vessel arrival instances
         self.hatch_profiles:List[HatchProfile] = []  # List of hatch profiles
+        self.yard_planner:YardPlanner = yard_planner
 
     def add_berth(self, 
                   name:str, 
@@ -31,7 +35,7 @@ class BerthPlanner:
         """
         Adds a crane to the berth planner. It can have any number of cranes
         """
-        self.cranes.append(Crane(name, self.env, capacity=1))
+        self.cranes.append(Crane(name, self.env, self.yard_planner, capacity=1))
         return self.cranes
     
     def add_hatch_profile(self, 

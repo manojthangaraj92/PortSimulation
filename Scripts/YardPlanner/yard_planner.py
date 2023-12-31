@@ -16,17 +16,24 @@ class YardPlanner:
     def add_block(self,
                   capacity:int, 
                   block_name:str) -> None:
-        new_block = self.blocks.get_block(self.env,
+        new_block = self.blocks.add_block(self.env,
                                         capacity=capacity,
                                         name=block_name)
         self.block_list.append(new_block)
+
+    def get_block(self,
+                  block_name:str) -> Block:
+        block = self.blocks.get_block(block_name)
+        if block is not None:
+            return block
+        return None
         
     def yard_place_container(self,
                              container:Container,
                              block_name:str,
                              bay:int,
                              cell:int) -> None:
-        block = self.blocks.get_block(block_name)
+        block = self.get_block(block_name)
         block.store_container(container,
                               container._size,
                               bay,

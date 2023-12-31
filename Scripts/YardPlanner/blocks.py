@@ -89,9 +89,9 @@ class Block(FilterStore):
         
         # Store container in the specified bay and cell, on the top of the stack
         self._matrix[bay][cell].push(container)
-        container._bay = bay
-        container._cell = cell
-        container._tier = len(self._matrix[bay][cell])
+        container.bay = bay
+        container.cell = cell
+        container.tier = len(self._matrix[bay][cell])
         container.block = self.name
         self.location_registry.register_container(container.container_id, self.name, bay, cell, container.tier)
         #self.location_registry[container.container_id] = (self.name, bay, cell, container.tier)
@@ -107,6 +107,8 @@ class Block(FilterStore):
             return False
         if bay < len(self._matrix) and self._matrix[bay + 1][cell]:  # Check upper even bay
             return False
+        if len(self._matrix[bay][cell]) >= self._num_tiers:
+            return False
         return True
 
     def _is_40ft_bay_available(self, 
@@ -118,6 +120,8 @@ class Block(FilterStore):
         if lower_bay > 0 and self._matrix[lower_bay][cell]:
             return False
         if upper_bay <= len(self._matrix) and self._matrix[upper_bay][cell]:
+            return False
+        if len(self._matrix[bay][cell]) >= self._num_tiers:
             return False
         return True
     
@@ -147,9 +151,9 @@ class Block(FilterStore):
                 # Allow temporary over-stacking in the temporary cell
                 self._matrix[bay][temp_cell].allow_temp_overstack()
                 self._matrix[bay][temp_cell].push(current_container)
-                current_container._tier = len(self._matrix[bay][temp_cell])
-                current_container._bay = self._matrix[bay]
-                current_container._cell = self._matrix[bay][temp_cell]
+                current_container.tier = len(self._matrix[bay][temp_cell])
+                current_container.bay = self._matrix[bay]
+                current_container.cell = self._matrix[bay][temp_cell]
                 self.location_registry.register_container(current_container.container_id, self.name, current_container._bay, current_container._cell, current_container._tier)
 
                 # Disallow temporary over-stacking after operation
@@ -181,9 +185,15 @@ class BlockFactory:
     _blocks = {}  # Dictionary to store block instances
 
     @staticmethod
-    def get_block(env, 
+    def add_block(env:simpy.Environment, 
                   capacity:int, 
                   name:str) -> Block:
         if name not in BlockFactory._blocks:
             BlockFactory._blocks[name] = Block(env, capacity, name)
         return BlockFactory._blocks[name]
+    
+    @staticmethod
+    def get_block(name:str) -> Block:
+        if name in BlockFactory._blocks:
+            return BlockFactory._blocks[name]
+        return None

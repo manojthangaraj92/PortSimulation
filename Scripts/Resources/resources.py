@@ -26,17 +26,18 @@ class Crane(Resource):
     """
     def __init__(self, 
                  name:str, 
-                 env:simpy.Environment, 
+                 env:simpy.Environment,
+                 yard_planner:YardPlanner,
                  capacity:int=1) -> None:
         super().__init__(env, capacity)
         self.env = env
         self.name = name
         self.vessel:Any = None
         self.truck_gang:Any = None
+        self.yard_planner = yard_planner
 
     def process_hatch_profiles(self, 
-                               vessel:Any,
-                               yard_planner:YardPlanner) -> None:
+                               vessel:Any) -> None:
         self.vessel = vessel
         if len(vessel.hatch_profiles)>0:
             for _ in vessel.hatch_profiles:
@@ -50,7 +51,7 @@ class Crane(Resource):
                         container_type = row["container_type"]
                         container_size = row["container_size"]
                         for _ in range(num_containers):
-                            container_created = yard_planner.container_factory.create_container(
+                            container_created = self.yard_planner.container_factory.create_container(
                                 container_type,
                                 container_size
                             )
@@ -58,11 +59,11 @@ class Crane(Resource):
                             container_created.to_interface = CTInterface.YARD_INTERFACE
                             yield self.env.timeout(1200)  # 100 seconds for each container
                             print(f"{self.name} moved a container from {vessel.name} at {self.env.now}")
-                            block, bay, cell = yard_planner.container_placement_rule.find_placement_by_bay(
-                                yard_planner.block_list, 
+                            block, bay, cell = self.yard_planner.container_placement_rule.find_placement_by_bay(
+                                self.yard_planner.block_list, 
                                 container_created
                                 )
-                            yard_planner.yard_place_container(
+                            self.yard_planner.yard_place_container(
                                 container_created, 
                                 block, 
                                 bay, 
