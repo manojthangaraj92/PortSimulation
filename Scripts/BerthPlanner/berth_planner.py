@@ -3,6 +3,7 @@ import simpy
 from Scripts.Resources.resources import Berth, Crane
 from Scripts.BerthPlanner.vessel import Vessel, VesselArrival, HatchProfile
 from Scripts.YardPlanner.yard_planner import YardPlanner
+from Scripts.Utils.log import Logger
 
 class BerthPlanner:
     """
@@ -11,14 +12,16 @@ class BerthPlanner:
     """
     def __init__(self, 
                  env:simpy.Environment,
-                 yard_planner:YardPlanner) -> None:
+                 yard_planner:YardPlanner,
+                 logger:Logger) -> None:
         self.env = env
         self.berth:Berth = None  # List of available berths
         self.cranes:List[Crane] = []  # List of crane instances
         self.vessels: List[Vessel] = [] # List of Vessels instances
         self.scheduler:VesselArrival = VesselArrival(env) # List of vessel arrival instances
         self.hatch_profiles:List[HatchProfile] = []  # List of hatch profiles
-        self.yard_planner:YardPlanner = yard_planner
+        self.yard_planner:YardPlanner = yard_planner #Add the yard planner
+        self.logger:Logger = logger #Add the logger
 
     def add_berth(self, 
                   name:str, 
@@ -31,11 +34,11 @@ class BerthPlanner:
         return self.berth
     
     def add_crane(self, 
-                  name:str) -> List[Crane]:
+                  name:str,) -> List[Crane]:
         """
         Adds a crane to the berth planner. It can have any number of cranes
         """
-        self.cranes.append(Crane(name, self.env, self.yard_planner, capacity=1))
+        self.cranes.append(Crane(name, self.env, self.yard_planner, self.logger, capacity=1))
         return self.cranes
     
     def add_hatch_profile(self, 
@@ -64,6 +67,7 @@ class BerthPlanner:
         """
         vessel = Vessel(self.env,
                         name,
+                        self.logger,
                         length,
                         width)
         self.vessels.append(vessel)
@@ -98,11 +102,22 @@ class BerthPlanner:
     def await_berth_acquisition(self, 
                                 vessel:Vessel,
                                 cranes:List[Crane]) -> None:
+        """
+        This method requests the berth resource and yield them.
+        The berth is released when the crane finishes the job.
+
+        @@params vessel: The vessel object
+        @@params cranes: The list of crane object available in the model
+        """
+        # Request the berth and yield the request
         berth_request = self.berth.request()
         yield berth_request
         if (berth_request in self.berth.users):
+            self.logger.log(f'The {vessel.name} started the pre-inspection at {self.env.now}')
             print(f'The {vessel.name} started the pre-inspection at {self.env.now}')
             yield self.env.timeout(vessel.prePcat)
+            self.logger.log(f'The {vessel.name} finished the pre-inspection at {self.env.now}')
+            self.logger.log(f'The {vessel.name} is started the operation at {self.env.now}')
             print(f'The {vessel.name} finished the pre-inspection at {self.env.now}')
             print(f'The {vessel.name} is started the operation at {self.env.now}')
             vessel.on_berth_acquired(self.berth, berth_request)
@@ -126,6 +141,7 @@ class BerthPlanner:
                               cranes:List[Crane]) -> None:
         yield self.env.timeout(arrival_time - self.env.now)
         print(f'The {vessel.name} is arrived at {self.env.now}')
+        self.logger.log(f'The {vessel.name} is arrived at {self.env.now}')
         self.env.process(self.await_berth_acquisition(vessel, cranes))
 
     def process_arrivals(self) -> None:

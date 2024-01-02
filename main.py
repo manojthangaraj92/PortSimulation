@@ -1,17 +1,21 @@
 from Scripts import *
 #from Scripts.Utils.basic_objects import EventHandler
 import simpy
+import datetime
 
 #define the global variables
 RANDOM_SEED = 42
 SIMULATION_TIME = 1000000
+
+log_path = f'./log_files/{datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.log'
+log_file = Logger(log_path)
 
 # Create a SimPy environment
 env = simpy.Environment()
 
 # Create a BerthPlanner instance
 yard_planner = YardPlanner(env)
-berth_planner = BerthPlanner(env, yard_planner)
+berth_planner = BerthPlanner(env, yard_planner, log_file)
 
 # Create berth and crane and add it to the berth planner instance
 berth1 = berth_planner.add_berth("Berth1",capacity=2)

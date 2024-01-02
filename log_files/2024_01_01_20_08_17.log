@@ -1,0 +1,8 @@
+2024-01-01 20:08:17,146 - INFO: The Vessel1 is arrived at 10.0
+2024-01-01 20:08:17,146 - INFO: The Vessel1 started the pre-inspection at 10.0
+2024-01-01 20:08:17,146 - INFO: The Vessel2 is arrived at 20.0
+2024-01-01 20:08:17,146 - INFO: The Vessel2 started the pre-inspection at 20.0
+2024-01-01 20:08:17,146 - INFO: The Vessel1 finished the pre-inspection at 1010.0
+2024-01-01 20:08:17,146 - INFO: The Vessel1 is started the operation at 1010.0
+2024-01-01 20:08:17,163 - INFO: The Vessel2 finished the pre-inspection at 1020.0
+2024-01-01 20:08:17,163 - INFO: The Vessel2 is started the operation at 1020.0

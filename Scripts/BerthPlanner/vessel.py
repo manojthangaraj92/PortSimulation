@@ -1,5 +1,6 @@
 from Scripts.Resources.resources import *
 from Scripts.Utils.port_objects_definition import *
+from Scripts.Utils.log import Logger
 
 class HatchProfile:
     """
@@ -58,6 +59,7 @@ class Vessel:
     def __init__(self, 
                  env:simpy.Environment,
                  name:str,
+                 logger:Logger,
                  length:Optional[float]=300, 
                  width:Optional[float]=30):
         """
@@ -80,6 +82,7 @@ class Vessel:
         self._prePcat:int = 0
         self._postPcat:int = 0
         self._arrivalTime:int = 0
+        self.logger:Logger = logger
         Vessel.count += 1
     
     @property
@@ -128,12 +131,16 @@ class Vessel:
     
     def release_berth(self) -> None:
         if self.berth and not self.cranes:
+            self.logger.log(f"The {self.name} starts the post_pcat inspection at {self.env.now}")
             print(f"The {self.name} starts the post_pcat inspection at {self.env.now}")
             yield self.env.timeout(self.postPcat)
+            self.logger.log(f"The {self.name} finished the post_pcat inspection at {self.env.now}")
             print(f"The {self.name} finished the post_pcat inspection at {self.env.now}")
             self.berth.release(self.berth_request)
             self.berth.occupied_by.remove(self)
-            print(f"{self.berth.name} has completed all tasks for {self.name} at {self.env.now}")
+            self.logger.log(f"{self.berth.name} has completed all tasks for {self.name} at {self.env.now}")
+            self.logger.log(f'{self.name} leaving the berth at {self.env.now}')
+            print(f"{self.berth.name} has completed and left berth for {self.name} at {self.env.now}")
             self.berth = None
             self.berth_request = None
     
@@ -150,6 +157,7 @@ class Vessel:
                 crane.release(req)
                 crane.vessel = None
                 self.cranes.remove((crane,req))
+                self.logger.log(f'The {crane.name} is released from the {self.name} at {self.env.now}')
 
         if not self.cranes:
             self.env.process(self.release_berth())

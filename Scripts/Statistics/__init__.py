@@ -1,1 +1,2 @@
 from .time_generator import RandomTimeGenerator
+from .statistics_collector import StatsCollector
