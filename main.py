@@ -1,10 +1,13 @@
 from Scripts import *
 import simpy
 import datetime
+import random
 
 #define the global variables
 RANDOM_SEED = 42
 SIMULATION_TIME = 1000000
+
+random.seed(RANDOM_SEED)
 
 log_path = f'./log_files/{datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.log'
 log_file = Logger(log_path)

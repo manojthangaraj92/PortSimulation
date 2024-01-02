@@ -1,6 +1,7 @@
 import scipy.stats as stats
 from typing import Any, Dict, Union
 from scipy.stats import rv_continuous
+import numpy as np
 
 class RandomTimeGenerator:
     def __init__(self, 
@@ -18,7 +19,8 @@ class RandomTimeGenerator:
         self.distribution_function:rv_continuous = getattr(stats, distribution)
 
     def generate(self, 
-                 size: int = 1) -> Union[float, list]:
+                 size: int = 1,
+                 seed=None) -> Union[float, list]:
         """
         Generate random times based on the specified distribution and parameters.
 
@@ -28,4 +30,6 @@ class RandomTimeGenerator:
         Returns:
             Union[float, list]: A single generated random time if size is 1, otherwise a list of generated random times.
         """
+        if seed is None:
+            np.random.seed(42)
         return self.distribution_function.rvs(size=size, **self.params)
